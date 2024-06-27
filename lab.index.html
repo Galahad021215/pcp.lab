@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Adicione esta meta tag -->
+   <!-- Inclua o Firebase SDK -->
+<!-- Incluir o Firebase Realtime Database SDK v8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Ordem de Produção</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #221f1f;
+            display:flex
+            
+        }
+
+        .container {
+            max-width: 2000px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        h1 {
+            margin-top: 0;
+            
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+         td {
+            border: 3px solid #111010;
+            padding: 8px;
+            text-align: start;
+            
+            
+        }
+        th {
+            border: 3px solid #0a0a0a;
+            padding: 2px;
+            text-align: left;
+            background-color: yellow;
+            
+        }
+
+        .order {
+            display: inline-block;
+            border: 3px solid #413835;
+            padding: 3px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            
+        }
+
+        .order p {
+            margin: 0;
+            
+            
+        }
+        p {
+        text-align:left;
+    margin-block-start: 0em;
+    margin-block-end: 0em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    
+}
+        .order.executando {
+            background-color: rgb(243, 243, 232);
+            
+        }
+
+        .order.in-progress {
+            background-color: orange;
+        }
+
+        .order.FINALIZADO {
+            background-color: lightgreen;
+        }
+
+        .progress {
+            background-color: #4caf50;
+            height: 20px;
+            border-radius: 5px;
+        }
+
+        .control-panel {
+            margin-top: 10px;
+        }
+
+        .process-os {
+            margin-top: 10px;
+        }
+        
+        button1 {
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            background-color: #020202; /* Cor de fundo vermelha */
+            color: #ffffff; /* Cor do texto branca */
+            border: none; /* Remova a borda */
+            border-radius: 4px; /* Adicione bordas arredondadas */
+            padding: 2px 5px; /* Adicione preenchimento ao botão */
+            
+        }
+
+
+        button {
+            background-color: #5e3cf7; /* Cor de fundo vermelha */
+            color: #fff; /* Cor do texto branca */
+            border: none; /* Remova a borda */
+            border-radius: 5px; /* Adicione bordas arredondadas */
+            padding: 5px 10px; /* Adicione preenchimento ao botão */
+            cursor: pointer; /
+        }
+        .new-order-button {
+            background-color: #f7a63c; /* Cor de fundo */
+            color: #fff; /* Cor do texto */
+            border: none; /* Sem borda */
+            border-radius: 5px; /* Borda arredondada */
+            padding: 10px 20px; /* Preenchimento */
+            font-size: 16px; /* Tamanho da fonte */
+            cursor: pointer; /* Cursor do mouse */
+            margin-bottom: 20px; /* Margem inferior */
+        }
+
+        /* Estilos para o formulário */
+        #newOrderForm {
+            display: none; /* Ocultar o formulário por padrão */
+            margin-bottom: 20px; /* Margem inferior */
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+        .delete-button {
+            background-color: #dc3545; /* Cor de fundo vermelha */
+            color: #fff; /* Cor do texto branca */
+            border: none; /* Remova a borda */
+            border-radius: 5px; /* Adicione bordas arredondadas */
+            padding: 5px 10px; /* Adicione preenchimento ao botão */
+            cursor: pointer; /* Altere o cursor para indicar clicabilidade */
+        }
+        .atual-button {
+            background-color: #71deec; /* Cor de fundo vermelha */
+            color: #0a0a0a; /* Cor do texto branca */
+            border: none; /* Remova a borda */
+            border-radius: 5px; /* Adicione bordas arredondadas */
+            padding: 5px 10px; /* Adicione preenchimento ao botão */
+            cursor: pointer; /* Altere o cursor para indicar clicabilidade */
+        }
+
+        /* Estilo para o botão de exclusão quando passa o mouse por cima */
+        .delete-button:hover {
+            background-color: #c82333; /* Cor de fundo vermelha mais escura */
+        }
+        .order.urgent {
+            
+     background-color: rgb(21, 255, 0);
+    
+
+
+
+
+
+
+}
+@keyframes blink-animation {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.highlight-button {
+    animation: blink-animation 1s infinite; /* Faz o botão piscar */
+    background-color: rgb(255, 51, 0);
+    
+}
+/* Adicione isso ao seu estilo CSS existente */
+
+.order.highlighted {
+    margin: 5px; /* Margem */
+    padding: 10px; /* Preenchimento */
+    background-color: yellow; /* Cor de fundo amarela */
+  /*  animation: blink-animation 1s infinite; /* Animação de piscar */
+}
+
+@keyframes blink-animation {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+
+
+
+    </style>
+</head>
+
+<body>
+   
+    <div class="container">
+        <h1>Verificação de Ordem de Produção</h1>
+        <table>
+            <tr>
+                
+                <th>CORTE/DOBRA</th>
+                <th>START</th>
+                <th>CALDEIRARIA</th>
+                <th>PINTURA</th>
+                <th>PRÉ-MONTAGEM 1</th>
+                <th>INJECÃO</th>
+                <th>PRÉ-MONTAGEM 2</th>
+                <th>REFRIGERAÇÃO</th>
+                <th>MONTAGEM</th>
+                <th>ELÉTRICA</th>
+                <th>SUPORTE</th>
+                <th>TESTE</th>
+                <th>EMBALAGEM</th>
+            </tr>
+            <tr id="progressRow">
+                <!-- Progress Bars will be inserted here dynamically -->
+            </tr>
+        </table>
+        <div class="control-panel">
+            <label for="processFilter">Filtrar por Processo:</label>
+            <select id="processFilter" onchange="renderOrdersWithFilter()">
+
+                <option value="-1">Todos os Processos</option>
+                <option value="0">Corte/Dobra</option>
+                <option value="1">Start</option>
+                <option value="2">Caldeiraria</option>
+                <option value="3">Pintura</option>
+                <option value="4">Pré-Montagem 1</option>
+                <option value="5">Injeção</option>
+                <option value="6">Pré-Montagem 2</option>
+                <option value="7">Refrigeração</option>
+                <option value="8">Montagem</option>
+                <option value="9">Elétrica</option>
+                <option value="10">Suporte</option>
+                <option value="11">Teste</option>
+                <option value="12">Embalagem</option>
+            </select><br><br>
+            
+            
+        </div>
+        
+       
+        <div id="orders"></div>
+      <div id="orderForm">
+       
+        <button class="new-order-button" id="newOrderButton">Nova Ordem de Produção</button>
+
+    <form id="newOrderForm">
+        <label for="orderId">Número da Ordem de Produção:</label>
+        <input type="number" id="orderId" name="orderId" required><br><br>
+        <label for="processIndex">Processo Inicial:</label>
+        <input type="number" id="processIndex" name="processIndex" required min="1" max="12"><br><br>
+        <label for="equipmentName">Nome do Equipamento:</label>
+        <input type="text" id="equipmentName" name="equipmentName" required><br><br> <!-- Adicionando campo para o nome do equipamento -->
+        <label for="orderDate">Data de Início:</label>
+        <input type="date" id="orderDate" name="orderDate" required><br><br>
+        <button type="submit">Adicionar</button><br><br>
+    </form>
+</div>
+
+        <button onclick="enviarListaTelegram()">Enviar RELATÓRIO</button>
+        <div id="reminderSection">
+            <h2>Lembretes</h2>
+            <textarea id="reminderInput" rows="4" cols="50" placeholder="Digite seu lembrete aqui"></textarea><br>
+            <button onclick="addReminder()">Adicionar Lembrete</button><br><br>
+            <h3>Lembretes Salvos:</h3>
+            <ul id="reminderList"></ul>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
+    
+
+    <script>
+     
+
+
+function renderOrdersWithFilter() {
+    const processIndex = parseInt(document.getElementById("processFilter").value);
+    const filteredOrders = orders.filter(order => order.processIndex === processIndex || processIndex === -1);
+    renderFilteredOrders(filteredOrders);
+}
+
+function renderFilteredOrders(filteredOrders) {
+    const ordersContainer = document.getElementById("orders");
+    ordersContainer.innerHTML = "";
+
+    filteredOrders.forEach(order => {
+        const orderDiv = document.createElement("div");
+        orderDiv.classList.add("order", order.status);
+        orderDiv.dataset.orderId = order.id;
+
+        const orderButton = document.createElement("button1");
+        orderButton.innerText = `OP*${order.id}${order.processIndex === 0 ? '' : `🟢`}`;
+        orderButton.addEventListener("click", function() {
+            const detailsDiv = this.parentNode.querySelector(".order-details");
+            if (detailsDiv) {
+                detailsDiv.style.display = detailsDiv.style.display === "none" ? "block" : "none";
+            }
+        });
+
+        orderDiv.appendChild(orderButton);
+
+        const detailsDiv = document.createElement("div");
+        detailsDiv.classList.add("order-details");
+        detailsDiv.style.display = "none"; // Ocultar por padrão
+        detailsDiv.innerHTML = `
+            <p>OP*${order.id}</p>
+            <p>Processo: ${processNames[order.processIndex]}</p>
+            <p>Equipamento: ${order.equipmentName}</p>
+            <p>ENTREGA: ${order.orderDate}</p>
+            <p>Status: ${order.status}</p>
+            <div class="control-panel">
+                ${order.processIndex === 0 ? '' : `<button class="highlight-button" onclick="button1">${calculateDaysInProcess(order.id)} dias\npara concluir</button>`}
+                <input type="date" id="orderStartDate_${order.id}" placeholder="Data de Início">
+                <select id="nextProcess_${order.id}">
+                    ${processNames.map((name, index) => `<option value="${index}">${name}</option>`).join('')}
+                </select>
+                <button onclick="advanceOrder(${order.id})">Avançar</button>
+                <button onclick="showOrderHistory(${order.id})">Histórico</button>
+                <div class="order-sequence">
+                    <label for="orderSequence_${order.id}">Prioridade:</label>
+                    <input type="number" id="orderSequence_${order.id}" value="${order.sequence || ''}" min="1" max="${filteredOrders.length}">
+                    <button class="atual-button" onclick="updateOrderSequence(${order.id})">Atualizar</button>
+                    <button class="delete-button" onclick="deleteOrder(${order.id})">Excluir</button>
+                
+
+                </div>
+            </div>`;
+
+        orderDiv.appendChild(detailsDiv);
+        ordersContainer.appendChild(orderDiv);
+    });
+}
+// Função para adicionar lembretes
+function addReminder() {
+    const reminderInput = document.getElementById("reminderInput");
+    const reminderText = reminderInput.value.trim();
+    if (reminderText) {
+        const reminderList = document.getElementById("reminderList");
+        const listItem = document.createElement("li");
+        listItem.textContent = reminderText;
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Excluir";
+        deleteButton.onclick = function() {
+            deleteReminder(reminderText);
+            listItem.remove();
+        };
+        listItem.appendChild(deleteButton);
+        reminderList.appendChild(listItem);
+        saveReminder(reminderText);
+        reminderInput.value = "";
+    } else {
+        alert("Por favor, digite um lembrete válido.");
+    }
+}
+
+// Função para salvar lembretes
+function saveReminder(reminderText) {
+    let reminders = localStorage.getItem("reminders");
+    reminders = reminders ? JSON.parse(reminders) : [];
+    reminders.push(reminderText);
+    localStorage.setItem("reminders", JSON.stringify(reminders));
+}
+
+// Função para carregar lembretes salvos
+function loadReminders() {
+    let reminders = localStorage.getItem("reminders");
+    reminders = reminders ? JSON.parse(reminders) : [];
+    const reminderList = document.getElementById("reminderList");
+    reminderList.innerHTML = "";
+    reminders.forEach(reminder => {
+        const listItem = document.createElement("li");
+        listItem.textContent = reminder;
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Excluir";
+        deleteButton.onclick = function() {
+            deleteReminder(reminder);
+            listItem.remove();
+        };
+        listItem.appendChild(deleteButton);
+        reminderList.appendChild(listItem);
+    });
+}
+
+// Função para excluir lembretes
+function deleteReminder(reminderText) {
+    let reminders = localStorage.getItem("reminders");
+    reminders = reminders ? JSON.parse(reminders) : [];
+    const index = reminders.indexOf(reminderText);
+    if (index !== -1) {
+        reminders.splice(index, 1);
+        localStorage.setItem("reminders", JSON.stringify(reminders));
+    }
+}
+
+// Chamar a função para carregar lembretes quando a página for carregada
+document.addEventListener("DOMContentLoaded", loadReminders);
+
+
+
+
+
+  // Função para alternar a exibição do formulário
+  // Verifica se o botão foi clicado
+  document.getElementById("newOrderButton").addEventListener("click", function() {
+            // Exibe o formulário quando o botão é clicado
+            document.getElementById("newOrderForm").style.display = "block";
+        });
+
+
+
+function listenToOrders() {
+    const db = firebase.database();
+    db.ref('orders').on('value', (snapshot) => {
+        const ordersData = snapshot.val();
+        // Faça algo com os dados das ordens aqui
+    });
+}
+
+
+
+
+
+
+function highlightProcessesWithMoreThanTwoOrders() {
+    const processOrdersDivs = document.querySelectorAll(".process-os");
+    
+    let highlightedProcesses = [];
+
+    processOrdersDivs.forEach(div => {
+        const ordersCount = div.children.length;
+        if (ordersCount > 4) {
+            div.parentElement.style.backgroundColor = "red";
+            highlightedProcesses.push(div.parentElement.id); // Salvando o ID do processo destacado
+        } else {
+            div.parentElement.style.backgroundColor = ""; // Resetar a cor de fundo
+        }
+    });
+
+    // Salvando os processos destacados no localStorage
+    localStorage.setItem("highlightedProcesses", JSON.stringify(highlightedProcesses));
+}
+
+// Chamando a função para destacar os processos assim que a página for carregada
+window.onload = function() {
+    highlightProcessesWithMoreThanTwoOrders();
+};
+
+
+
+        let orders = [];
+        let processNames = ["⚙️CORTE/DOBRA","⚙️START", "⚙️CALDEIRARIA", "⚙️PINTURA", "⚙️PRÉ-MONTAGEM 1", "⚙️INJEÇAO", "⚙️PRÉ-MONTAGEM 2", "⚙️REFRIGERAÇÃO","⚙️MONTAGEM","⚙️ELÉTRICA","⚙️SUPORTE","⚙️TESTE", "⚙️EMBALAGEM"];
+        let processProgress = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0]; // 12 processes, each initialized at 0%
+
+        document.addEventListener("DOMContentLoaded", function() {
+            renderProgressBars(); // Render progress bars on page load
+            loadOrders(); // Load orders from localStorage
+            document.getElementById("newOrderForm").addEventListener("submit", addNewOrder);
+        });
+
+        function renderOrders() {
+            const ordersContainer = document.getElementById("orders");
+            ordersContainer.innerHTML = "";
+
+            orders.forEach(order => {
+        const orderDiv = document.createElement("div");
+        orderDiv.classList.add("order", order.status);
+        
+        orderDiv.dataset.orderId = order.id;
+        orderDiv.innerHTML = `
+            <p>OP      *${order.id}</p>
+            <p>Processo: ${processNames[order.processIndex]}</p>
+            <p>Equipamento: ${order.equipmentName}</p> <!-- Exibindo o nome do equipamento -->
+            <p>ENTREGA ${order.orderDate}</p>
+            <p>Status: ${order.status}</p>
+                    <div class="control-panel">
+                        
+                        <input type="date" id="orderStartDate_${order.id}" placeholder="Data de Início">
+                        <select id="nextProcess_${order.id}">
+                    ${processNames.map((name, index) => `<option value="${index}">${name}</option>`).join('')}
+                </select>
+                        <button onclick="advanceOrder(${order.id})">Avançar</button>
+                        <button onclick="showOrderHistory(${order.id})">Histórico</button>
+                        <button onclick="calculateDaysInProcess(${order.id})">Tempo</button>
+                        
+                    <div class="order-sequence">
+                         <label for="orderSequence_${order.id}">Prioridade:</label>
+                         <input type="number" id="orderSequence_${order.id}" value="${order.sequence || ''}" min="1" max="${orders.length}">
+                         <button class="atual-button" onclick="updateOrderSequence(${order.id})">Atualizar</button>
+                         <button class="delete-button" onclick="deleteOrder(${order.id})">Excluir</button>
+                         
+
+                    </div>`;
+               
+            });
+
+            // Clear previous orders in each process
+            const processOrdersDivs = document.querySelectorAll(".process-os");
+            processOrdersDivs.forEach(div => div.innerHTML = "");
+
+            // Add orders to their respective processes
+            orders.forEach(order => {
+                const processIndex = order.processIndex;
+                const processOrdersDiv = document.getElementById(`processOrders_${processIndex}`);
+                const orderInfo = document.createElement("p");
+                orderInfo.textContent = `Op*${order.id}`;
+                processOrdersDiv.appendChild(orderInfo);
+            });
+
+           
+        }
+
+// Dentro da função para inicializar a página
+// Adicionar evento mouseover para exibir informações da ordem de produção ao passar o mouse sobre a container
+// Adicionar evento mouseover para exibir informações da ordem de produção ao passar o mouse sobre a container
+
+function renderOrdersWithDetails() {
+    const ordersContainer = document.getElementById("orders");
+    ordersContainer.innerHTML = "";
+
+    orders.forEach(order => {
+        const orderDiv = document.createElement("div");
+        orderDiv.classList.add("order", order.status);
+        orderDiv.dataset.orderId = order.id; // Adicionar o atributo data-order-id
+
+        const orderButton = document.createElement("button1");
+        orderButton.innerText  = `Op*${order.id}${order.processIndex === 0 ? '' : `🟢`}`;
+        orderButton.addEventListener("click", function() {
+            const detailsDiv = this.parentNode.querySelector(".order-details");
+            if (detailsDiv) {
+                detailsDiv.style.display = detailsDiv.style.display === "none" ? "block" : "none";
+            }
+        });
+
+        orderDiv.appendChild(orderButton);
+
+        const detailsDiv = document.createElement("div");
+        detailsDiv.classList.add("order-details");
+        detailsDiv.style.display = "none"; // Ocultar por padrão
+        detailsDiv.innerHTML = `
+        
+        <p>OP*${order.id}</p>
+            <p>Processo: ${processNames[order.processIndex]}</p>
+            <p>Equipamento: ${order.equipmentName}</p> <!-- Exibindo o nome do equipamento -->
+            <p>ENTREGA: ${order.orderDate}</p>
+            <p>Status: ${order.status} </p>
+           
+                    <div class="control-panel">
+                        ${order.processIndex === 0 ? '' : `<button class="highlight-button" onclick="button1">${calculateDaysInProcess(order.id)} dias\npara concluir</button>`}
+        
+                        <input type="date" id="orderStartDate_${order.id}" placeholder="Data de Início">
+                        <select id="nextProcess_${order.id}">
+                    ${processNames.map((name, index) => `<option value="${index}">${name}</option>`).join('')}
+                </select>
+                        <button onclick="advanceOrder(${order.id})">Avançar</button>
+                        <button onclick="showOrderHistory(${order.id})">Histórico</button>
+                       
+                    <div class="order-sequence">
+                         <label for="orderSequence_${order.id}">Prioridade:</label>
+                         <input type="number" id="orderSequence_${order.id}" value="${order.sequence || ''}" min="1" max="${orders.length}">
+                         <button class="atual-button" onclick="updateOrderSequence(${order.id})">Atualizar</button>
+                         <button class="delete-button" onclick="deleteOrder(${order.id})">Excluir</button>
+                         
+
+                    </div>`;
+
+        orderDiv.appendChild(detailsDiv);
+
+        ordersContainer.appendChild(orderDiv);
+        
+    });
+}
+
+
+function calculateDaysInProcess(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+        const currentDate = new Date();
+        const orderDate = new Date(order.orderDate);
+        return Math.floor((currentDate - orderDate) / (1000 * 60 * 60 * 24));
+    }
+    return 0; // Retorne 0 se a ordem não for encontrada
+}
+
+
+
+
+
+
+
+
+
+
+
+        
+        
+        function updateOrderSequence(orderId) {
+    const orderIndex = orders.findIndex(o => o.id === orderId);
+    const orderSequenceInput = document.getElementById(`orderSequence_${orderId}`);
+    const newSequence = parseInt(orderSequenceInput.value);
+
+    if (!isNaN(newSequence) && newSequence >= 1 && newSequence <= orders.length) {
+        // Remover a ordem atual da sequência
+        const currentOrder = orders.splice(orderIndex, 1)[0];
+        // Inserir a ordem na nova posição na sequência
+        orders.splice(newSequence - 1, 0, currentOrder);
+        // Atualizar a propriedade de sequência de todas as ordens
+        orders.forEach((order, index) => {
+            order.sequence = index + 1;
+        });
+        saveOrders();
+        renderOrders();
+    } else {
+        alert('Por favor, insira um número válido de sequência.');
+    }
+}
+
+
+
+
+
+
+
+
+
+        function renderProgressBars() {
+            const progressRow = document.getElementById("progressRow");
+            progressRow.innerHTML = ""; // Clear previous progress bars
+
+            processProgress.forEach((progress, index) => {
+                const progressCell = document.createElement("td");
+                const progressBar = document.createElement("div");
+                progressBar.classList.add("progress-bar");
+                progressBar.innerHTML = `<div class="progress" style="width: ${progress}%;"></div>`;
+                progressCell.appendChild(progressBar);
+                progressRow.appendChild(progressCell);
+
+                // Show orders for each process
+                const processOrdersDiv = document.createElement("div");
+                processOrdersDiv.classList.add("process-os");
+                processOrdersDiv.setAttribute("id", `processOrders_${index}`);
+                progressCell.appendChild(processOrdersDiv);
+            });
+        }
+
+        function loadOrders() {
+    const savedOrders = localStorage.getItem("orders");
+    if (savedOrders) {
+        orders = JSON.parse(savedOrders);
+        renderOrders();
+        renderOrdersWithDetails();
+        
+        // Adiciona a classe 'highlighted' às ordens nos processos (exceto no corte e dobra)
+        orders.forEach(order => {
+            if (order.processIndex !== 0) {
+                const orderDiv = document.querySelector(`[data-order-id="${order.id}"]`);
+                orderDiv.classList.add('highlighted');
+            }
+        });
+    }
+}
+
+
+        function saveOrders() {
+            localStorage.setItem("orders", JSON.stringify(orders));
+        }
+        function addOrder(orderId, processIndex, equipmentName, orderDate, urgent) {
+    let status = "executando"; // Defina o status inicial
+    if (processIndex === 0) {
+        status = "CORTE/DOBRA"; // Defina o status como "CORTE/DOBRA" se for o processo de corte e dobra
+    }
+    orders.push({ 
+        id: orderId, 
+        processIndex: processIndex - 1, 
+        equipmentName: equipmentName,
+        status: status, // Use o status determinado acima
+        orderDate: orderDate, 
+        history: [],
+        urgent: urgent  // Adicionando a propriedade "urgent"
+    });
+    
+    saveOrders();
+    renderOrders();
+    renderOrdersWithDetails()
+       // Adiciona a classe 'highlighted' apenas se não for o processo de corte e dobra
+       if (processIndex !== 0||'') { 
+        const orderDiv = document.querySelector(`[data-order-id="${orderId}"]`);
+        orderDiv.classList.add('highlighted'); 
+    }
+}
+
+
+
+       function deleteOrder(orderId) {
+    const orderIndex = orders.findIndex(o => o.id === orderId); // Encontrar o índice da ordem
+    if (orderIndex !== -1 && orders[orderIndex]) { // Verificar se a ordem foi encontrada e se não é undefined
+        const order = orders[orderIndex];
+        // Registrar o processo atual no histórico antes de excluir
+        if (!order.history) {
+            order.history = [];
+        }
+        order.history.push(order.processIndex);
+        orders.splice(orderIndex, 1); // Remover a ordem do array
+        saveOrders();
+        renderOrders();
+    }
+}
+
+
+      
+
+function advanceOrder(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+        const orderStartDateInput = document.getElementById(`orderStartDate_${orderId}`);
+        const orderStartDate = orderStartDateInput.value;
+
+        // Capturar o próximo processo selecionado
+        const nextProcessSelect = document.getElementById(`nextProcess_${orderId}`);
+        const nextProcessIndex = parseInt(nextProcessSelect.value);
+
+        // Atualizar a data de início da ordem de serviço apenas se houver uma data inserida
+        if (orderStartDate) {
+            order.orderDate = orderStartDate;
+        }
+
+        const currentProcessOrdersDiv = document.getElementById(`processOrders_${order.processIndex}`);
+        currentProcessOrdersDiv.innerHTML = "";
+
+        // Verificar se a propriedade history existe e, se não existir, inicializá-la como um array vazio
+        if (!order.history) {
+            order.history = [];
+        }
+
+        // Registrar o processo atual no histórico
+        order.history.push(order.processIndex);
+
+        order.processIndex = nextProcessIndex; // Atualizar o processo da ordem
+
+        if (order.processIndex >= processProgress.length) {
+            order.status = "FINALIZADO";
+        }
+
+        // Adicionar ordem ao novo processo
+        const newProcessOrdersDiv = document.getElementById(`processOrders_${order.processIndex}`);
+        const orderInfo = document.createElement("p");
+        orderInfo.textContent = `OP#${order.id}`;
+        newProcessOrdersDiv.appendChild(orderInfo);
+
+        saveOrders();
+        renderOrders();
+    }
+}
+
+
+        function showOrderHistory(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                alert(`Histórico da Ordem de Serviço #${order.id}:\n\n${order.history.map(index => processNames[index]).join(', ')}`);
+            }
+        }
+
+        function addNewOrder(event) {
+    event.preventDefault();
+    const orderId = parseInt(document.getElementById("orderId").value);
+    const processIndex = parseInt(document.getElementById("processIndex").value);
+    const equipmentName = document.getElementById("equipmentName").value; // Capturar o nome do equipamento
+    const orderDate = document.getElementById("orderDate").value;
+    addOrder(orderId, processIndex, equipmentName, orderDate); // Passar o nome do equipamento como argumento
+    document.getElementById("newOrderForm").reset();
+    
+}
+
+
+        var request = new XMLHttpRequest();
+        var token ='5520067832:AAHqnB-ANXTcfjt5srxQUOPUcnmqUqPSkI4';
+        var chat = '-1001805890027';
+
+        function enviarMsgTelegram(msg) {
+            try {
+                if (token != undefined && token != `` && chat != undefined && chat != ``) {
+                    request.open("POST", `https://api.telegram.org/bot${token}/sendMessage`, true);
+                    request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                    request.send(JSON.stringify({ chat_id: chat, text: msg }));
+                }
+            } catch (err) {
+                console.log(`Erro na API do Telegram - não enviou a mensagem`);
+            }
+        }
+
+        function sendOrderListToTelegram() {
+            let orderList = 'Relatório de Ordem de Produção por Processo:\n\n';
+
+            processNames.forEach((processName, index) => {
+                orderList += `⚫️Processo: ${processName}\n`;
+                const ordersInProcess = orders.filter(order => order.processIndex === index);
+                if (ordersInProcess.length > 0) {
+                    ordersInProcess.forEach(order => {
+                        orderList += `Ordem de Produção #${order.id}\nEquipamento: ${order.equipmentName}\nStatus: ${order.status}\ndata-${order.orderDate}\n\n`;
+                    });
+                } else {
+                    orderList += 'Nenhuma ordem de produção neste processo.\n\n';
+                }
+            });
+
+            const mensagem = encodeURIComponent(orderList);
+            const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat}&text=${mensagem}`;
+
+            try {
+                if (token && chat) {
+                    request.open("POST", url, true);
+                    request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                    request.send();
+                }
+            } catch (err) {
+                console.log(`Erro na API do Telegram - não enviou a mensagem`);
+            }
+        }
+
+        function enviarListaTelegram() {
+            sendOrderListToTelegram();
+        }
+    </script>
+</body>
+</html>
